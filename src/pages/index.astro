@@ -1,0 +1,56 @@
+---
+import NoteLayout from '../layouts/NoteLayout.astro';
+import HomeTree from '../components/HomeTree.astro';
+import { getNotes, buildTree, pageHref, titleOf } from '../lib/notes';
+import { siteConfig } from '../site.config';
+
+const notes = await getNotes();
+const tree = buildTree(notes);
+const totalNotes = notes.length;
+
+const recent = notes
+  .filter((n) => n.data.date)
+  .sort((a, b) => b.data.date!.getTime() - a.data.date!.getTime())
+  .slice(0, 6);
+
+const fmt = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' });
+const base = import.meta.env.BASE_URL;
+---
+
+<NoteLayout title="" headings={[]}>
+  <Fragment slot="right">
+    <div class="right-card">
+      <h3>最近更新</h3>
+      {
+        recent.length > 0 ? (
+          <ul class="recent-list">
+            {recent.map((n) => (
+              <li>
+                <a href={pageHref(n.id)}>{titleOf(n)}</a>
+                <span class="recent-date">{fmt.format(n.data.date!)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="muted">暂无更新记录（笔记 frontmatter 中添加 date 字段后显示）</p>
+        )
+      }
+    </div>
+  </Fragment>
+
+  <div class="home">
+    <header class="home-head">
+      <img class="home-avatar" src={base + siteConfig.avatar} alt={siteConfig.author} width="64" height="64" />
+      <h1>{siteConfig.title}</h1>
+      <p>{siteConfig.description} · 共 {totalNotes} 篇笔记</p>
+    </header>
+
+    <nav class="home-tree" aria-label="全部分类目录">
+      {tree.length > 0 ? (
+        tree.map((node) => <HomeTree node={node} />)
+      ) : (
+        <p class="muted">还没有笔记，在 src/content/notes 下添加 md 文件即可。</p>
+      )}
+    </nav>
+  </div>
+</NoteLayout>

@@ -1,0 +1,62 @@
+---
+import NoteLayout from '../layouts/NoteLayout.astro';
+import { render } from 'astro:content';
+import { getNotes, titleOf, type Heading, type Note } from '../lib/notes';
+
+export async function getStaticPaths() {
+  const notes = await getNotes();
+  return notes.map((note) => ({ params: { slug: note.id }, props: { note } }));
+}
+
+const { note } = Astro.props as { note: Note };
+const { Content, headings } = await render(note);
+const title = titleOf(note);
+const base = import.meta.env.BASE_URL;
+const fmt = new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' });
+const segs = note.id.split('/');
+const dirs = segs.slice(0, -1);
+---
+
+<NoteLayout
+  title={title}
+  description={note.data.description}
+  activePath={note.id}
+  headings={headings as Heading[]}
+>
+  <article class="prose note">
+    <nav class="breadcrumb" aria-label="面包屑">
+      <a href={base}>首页</a>
+      {
+        dirs.map((d) => (
+          <Fragment>
+            <span class="sep">/</span>
+            <span>{d}</span>
+          </Fragment>
+        ))
+      }
+    </nav>
+
+    <header class="note-header">
+      <h1>{title}</h1>
+      <div class="note-meta">
+        {note.data.date && <time datetime={note.data.date.toISOString()}>{fmt.format(note.data.date)}</time>}
+        {
+          note.data.tags && note.data.tags.length > 0 && (
+            <ul class="tag-list">
+              {note.data.tags.map((t) => <li class="tag">#{t}</li>)}
+            </ul>
+          )
+        }
+      </div>
+      {note.data.description && <p class="note-desc">{note.data.description}</p>}
+    </header>
+
+    <div class="note-body">
+      <Content />
+    </div>
+
+    <footer class="note-footer">
+      笔记文件：<code>src/content/notes/{note.id}.md</code>
+    </footer>
+  </article>
+</NoteLayout>

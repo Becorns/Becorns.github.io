@@ -1,0 +1,68 @@
+---
+import type { Heading } from '../lib/notes';
+import { buildHeadingTree } from '../lib/notes';
+import TocNodeItem from './TocNodeItem.astro';
+
+interface Props {
+  headings: Heading[];
+}
+
+const { headings } = Astro.props;
+const tree = buildHeadingTree(headings, 2);
+---
+
+<nav class="toc" aria-label="文章大纲">
+  <div class="toc-title">本页目录</div>
+  {
+    tree.length > 0 ? (
+      <ul class="toc-tree">
+        {tree.map((node) => <TocNodeItem node={node} />)}
+      </ul>
+    ) : (
+      <p class="toc-empty">本文暂无二级 / 三级标题</p>
+    )
+  }
+</nav>
+
+<script is:inline>
+  // 目录滚动高亮 + 自动展开当前标题的父级树节点
+  const links = Array.from(document.querySelectorAll('.toc a[href^="#"]'));
+  const heads = Array.from(
+    document.querySelectorAll('.note-body h2, .note-body h3, .note-body h4, .note-body h5')
+  );
+  let ticking = false;
+
+  function update() {
+    ticking = false;
+    const offset = 90;
+    let current = heads[0];
+    for (const h of heads) {
+      if (h.getBoundingClientRect().top - offset <= 0) current = h;
+      else break;
+    }
+    const id = current ? current.id : '';
+    for (const a of links) {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    }
+    if (id) {
+      let el = document.getElementById(id);
+      while (el && el !== document.body) {
+        const parent = el.parentElement;
+        if (parent && parent.tagName === 'DETAILS') parent.open = true;
+        el = el.parentElement;
+      }
+    }
+  }
+
+  window.addEventListener(
+    'scroll',
+    function () {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    },
+    { passive: true }
+  );
+  update();
+</script>

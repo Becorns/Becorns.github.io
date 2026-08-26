@@ -1,0 +1,36 @@
+---
+import HomeTree from './HomeTree.astro';
+import { pageHref, type TreeNode } from '../lib/notes';
+
+interface Props {
+  node: TreeNode;
+}
+
+const { node } = Astro.props;
+const isDir = node.type === 'dir';
+const count = isDir
+  ? (function tc(n: TreeNode[]): number {
+      return n.reduce((s, x) => s + (x.type === 'file' ? 1 : tc(x.children)), 0);
+    })(node.children)
+  : 0;
+---
+
+{
+  isDir ? (
+    <details class="ht-dir" open>
+      <summary>
+        <span class="ht-marker" aria-hidden="true">▸</span>
+        <span class="ht-dir-name">{node.name}</span>
+        <span class="ht-count">{count}</span>
+      </summary>
+      <div class="ht-children">
+        {node.children.map((child) => <HomeTree node={child} />)}
+      </div>
+    </details>
+  ) : (
+    <div class="ht-file">
+      <span class="ht-marker-spacer" aria-hidden="true"></span>
+      <a href={pageHref(node.id)}>{node.name}</a>
+    </div>
+  )
+}

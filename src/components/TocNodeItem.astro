@@ -1,0 +1,29 @@
+---
+import TocNodeItem from './TocNodeItem.astro';
+import type { TocNode } from '../lib/notes';
+
+interface Props {
+  node: TocNode;
+}
+
+const { node } = Astro.props;
+const hasChildren = node.children.length > 0;
+---
+
+<li>
+  {
+    hasChildren ? (
+      <details class="toc-node">
+        <summary title={node.text}>
+          <span class="marker" aria-hidden="true">▸</span>
+          <span class="toc-node-label">{node.text}</span>
+        </summary>
+        <ul class="toc-children">
+          {node.children.map((child) => <TocNodeItem node={child} />)}
+        </ul>
+      </details>
+    ) : (
+      <a class="toc-node-leaf" href={`#${node.slug}`}>{node.text}</a>
+    )
+  }
+</li>

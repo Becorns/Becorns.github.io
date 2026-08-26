@@ -1,0 +1,88 @@
+---
+import Sidebar from '../components/Sidebar.astro';
+import Toc from '../components/Toc.astro';
+import Globals from '../components/Globals.astro';
+import { buildTree, getNotes, type Heading } from '../lib/notes';
+import { siteConfig } from '../site.config';
+
+interface Props {
+  title: string;
+  description?: string;
+  activePath?: string;
+  headings?: Heading[];
+}
+
+const { title, description, activePath, headings = [] } = Astro.props;
+const notes = await getNotes();
+const tree = buildTree(notes);
+const pageTitle = title ? `${title} · ${siteConfig.title}` : siteConfig.title;
+const base = import.meta.env.BASE_URL;
+const showRight = headings.length > 0 || Astro.slots.has('right');
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <link rel="icon" type="image/svg+xml" href={base + 'favicon.svg'} />
+    <link rel="icon" href={base + 'favicon.ico'} />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description ?? siteConfig.description} />
+    <link rel="canonical" href={Astro.url} />
+    <Globals />
+  </head>
+  <body>
+    <button class="menu-btn" type="button" data-sidebar-toggle aria-label="打开目录" aria-expanded="false">☰</button>
+    <div class="backdrop" data-sidebar-backdrop hidden></div>
+
+    <div class:list={['app', { 'no-right': !showRight }]}>
+      <aside class="sidebar">
+        <Sidebar tree={tree} activePath={activePath} />
+      </aside>
+
+      <main class="content">
+        <slot />
+      </main>
+
+      {
+        showRight && (
+          <aside class="right">
+            {headings.length > 0 ? <Toc headings={headings} /> : <slot name="right" />}
+          </aside>
+        )
+      }
+    </div>
+
+    <script is:inline>
+      // 移动端侧边栏抽屉
+      const btn = document.querySelector('[data-sidebar-toggle]');
+      const sidebar = document.querySelector('.sidebar');
+      const backdrop = document.querySelector('[data-sidebar-backdrop]');
+
+      function closeSidebar() {
+        sidebar?.classList.remove('open');
+        backdrop?.setAttribute('hidden', '');
+        btn?.setAttribute('aria-expanded', 'false');
+      }
+
+      btn?.addEventListener('click', () => {
+        const open = sidebar?.classList.toggle('open');
+        backdrop?.toggleAttribute('hidden', !open);
+        btn?.setAttribute('aria-expanded', String(open));
+      });
+      backdrop?.addEventListener('click', closeSidebar);
+
+      // 目录树：全部展开 / 全部收起
+      document.querySelectorAll('[data-tree-action]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const expand = el.dataset.treeAction === 'expand';
+          document.querySelectorAll('.tree details').forEach((d) => {
+            d.open = expand;
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

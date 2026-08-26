@@ -1,0 +1,48 @@
+---
+import TreeItem from './TreeItem.astro';
+import { pageHref, type TreeNode } from '../lib/notes';
+
+interface Props {
+  node: TreeNode;
+  activeSegs: string[];
+}
+
+const { node, activeSegs } = Astro.props;
+
+/** 当前目录是否包含正在查看的笔记（用于自动展开父级目录） */
+function isActiveDir(pathSegs: string[]): boolean {
+  return (
+    pathSegs.length < activeSegs.length &&
+    pathSegs.every((seg, i) => seg === activeSegs[i])
+  );
+}
+
+function countFiles(nodes: TreeNode[]): number {
+  return nodes.reduce(
+    (n, x) => n + (x.type === 'file' ? 1 : countFiles(x.children)),
+    0
+  );
+}
+---
+
+{
+  node.type === 'dir' ? (
+    <details class="dir" open={isActiveDir(node.pathSegs)}>
+      <summary>
+        <span class="marker">▸</span>
+        <span class="dir-name">{node.name}</span>
+        <span class="dir-count">{countFiles(node.children)}</span>
+      </summary>
+      <div class="dir-children">
+        {node.children.map((child) => <TreeItem node={child} activeSegs={activeSegs} />)}
+      </div>
+    </details>
+  ) : (
+    <a
+      class:list={['file', { active: node.id === activeSegs.join('/') }]}
+      href={pageHref(node.id)}
+    >
+      <span class="file-name">{node.name}</span>
+    </a>
+  )
+}

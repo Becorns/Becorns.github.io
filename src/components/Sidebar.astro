@@ -1,0 +1,46 @@
+---
+import TreeItem from './TreeItem.astro';
+import { siteConfig } from '../site.config';
+import type { TreeNode } from '../lib/notes';
+
+interface Props {
+  tree: TreeNode[];
+  activePath?: string;
+}
+
+const { tree, activePath } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const activeSegs = activePath ? activePath.split('/') : [];
+
+function countNotes(nodes: TreeNode[]): number {
+  return nodes.reduce(
+    (n, node) => n + (node.type === 'file' ? 1 : countNotes(node.children)),
+    0
+  );
+}
+
+const total = countNotes(tree);
+---
+
+<header class="sidebar-header">
+  <a class="brand" href={base} aria-label="返回首页">
+    <img class="avatar" src={base + siteConfig.avatar} alt={siteConfig.author} width="42" height="42" />
+    <span class="brand-text">
+      <span class="brand-name">{siteConfig.author}</span>
+      <span class="brand-sub">{siteConfig.description}</span>
+    </span>
+  </a>
+  <div class="tree-tools">
+    <button type="button" data-tree-action="expand">全部展开</button>
+    <button type="button" data-tree-action="collapse">全部收起</button>
+  </div>
+</header>
+
+<nav class="tree" aria-label="笔记目录">
+  {tree.map((node) => <TreeItem node={node} activeSegs={activeSegs} />)}
+  {tree.length === 0 && (
+    <p class="tree-empty">还没有笔记，在 src/content/notes 下添加 md 文件即可。</p>
+  )}
+</nav>
+
+<footer class="sidebar-footer">共 {total} 篇笔记</footer>
