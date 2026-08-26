@@ -4,5 +4,5 @@ export const siteConfig = {
   author: 'Becorn',
   description: '个人笔记库',
   // 头像文件放在 public/ 下，此处写文件名（不带开头的 /）
-  avatar: 'avatar.svg',
+  avatar: 'avatar.png',
 };

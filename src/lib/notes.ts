@@ -57,17 +57,9 @@ export type TreeNode = FileNode | DirNode;
 
 const collator = new Intl.Collator('zh-Hans-CN', { numeric: true, sensitivity: 'base' });
 
-/** 从正文中提取第一个一级标题，作为标题兜底 */
-export function firstHeading(body?: string): string | undefined {
-  const m = body?.match(/^#\s+(.+?)\s*$/m);
-  return m?.[1]?.trim();
-}
-
-/** 笔记标题：frontmatter.title > 正文第一个 H1 > 文件名 */
+/** 笔记标题：frontmatter.title > 文件名（不再取正文第一个 H1） */
 export function titleOf(note: Note): string {
   if (note.data.title?.trim()) return note.data.title.trim();
-  const h = firstHeading(note.body);
-  if (h) return h;
   return note.id.split('/').pop() ?? note.id;
 }
 

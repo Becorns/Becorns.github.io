@@ -16,7 +16,7 @@ const hasChildren = node.children.length > 0;
       <details class="toc-node">
         <summary title={node.text}>
           <span class="marker" aria-hidden="true">▸</span>
-          <span class="toc-node-label">{node.text}</span>
+          <span class="toc-node-label" data-target={node.slug}>{node.text}</span>
         </summary>
         <ul class="toc-children">
           {node.children.map((child) => <TocNodeItem node={child} />)}

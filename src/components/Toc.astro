@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { headings } = Astro.props;
-const tree = buildHeadingTree(headings, 2);
+const tree = buildHeadingTree(headings, 1); // 1 = 含 md 的一级标题 #
 ---
 
 <nav class="toc" aria-label="文章大纲">
@@ -25,30 +25,47 @@ const tree = buildHeadingTree(headings, 2);
 </nav>
 
 <script is:inline>
-  // 目录滚动高亮 + 自动展开当前标题的父级树节点
-  const links = Array.from(document.querySelectorAll('.toc a[href^="#"]'));
+  // 目录滚动定位高亮：根据当前浏览位置高亮对应大纲项，并自动展开当前分支
+  const leaves = Array.from(document.querySelectorAll('.toc .toc-node-leaf'));
+  const labels = Array.from(document.querySelectorAll('.toc .toc-node-label'));
   const heads = Array.from(
-    document.querySelectorAll('.note-body h2, .note-body h3, .note-body h4, .note-body h5')
+    document.querySelectorAll('.note-body h1, .note-body h2, .note-body h3, .note-body h4, .note-body h5')
   );
+  // 从大纲节点反查对应的正文标题元素
+  function clearActive() {
+    for (const a of leaves) a.classList.remove('active');
+    for (const l of labels) l.classList.remove('active');
+  }
   let ticking = false;
 
   function update() {
     ticking = false;
     const offset = 90;
+    // 当前滚动位置命中的最后一个标题
     let current = heads[0];
     for (const h of heads) {
       if (h.getBoundingClientRect().top - offset <= 0) current = h;
       else break;
     }
     const id = current ? current.id : '';
-    for (const a of links) {
-      a.classList.toggle('active', a.getAttribute('href') === '#' + id);
+    clearActive();
+    // 命中项：叶子 <a> 或 父级 <span.label>（data-target 等于当前标题 id）则点亮
+    for (const a of leaves) {
+      if (a.getAttribute('href') === '#' + id) a.classList.add('active');
     }
+    for (const l of labels) {
+      if (l.dataset.target === id) l.classList.add('active');
+    }
+    // 自动展开 + 高亮当前标题的所有祖先父级，保持阅读上下文可见
     if (id) {
       let el = document.getElementById(id);
       while (el && el !== document.body) {
         const parent = el.parentElement;
-        if (parent && parent.tagName === 'DETAILS') parent.open = true;
+        if (parent && parent.tagName === 'DETAILS') {
+          parent.open = true;
+          const lbl = parent.querySelector(':scope > summary .toc-node-label');
+          if (lbl && lbl.dataset.target !== id) lbl.classList.add('active');
+        }
         el = el.parentElement;
       }
     }
