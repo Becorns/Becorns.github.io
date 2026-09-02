@@ -1,3 +1,7 @@
+---
+date: 2025-01-15
+---
+
 [SSRF](https://blog.csdn.net/qq_48904485/article/details/123653514?ops_request_misc=&request_id=&biz_id=102&utm_term=SSRF&utm_medium=distribute.pc_search_result.none-task-blog-2~all~sobaiduweb~default-3-123653514.142^v100^pc_search_result_base5&spm=1018.2226.3001.4187)：服务端伪造请求
 
 
