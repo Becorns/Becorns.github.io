@@ -1,3 +1,7 @@
+---
+date: 2025-03-21
+---
+
 # 协议简介
 
 RMI(remote method invocation)：远程方法调用。
